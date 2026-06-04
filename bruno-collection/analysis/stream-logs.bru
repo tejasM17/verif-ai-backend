@@ -1,0 +1,9 @@
+meta {
+  name: Stream Analysis Logs
+  type: ws
+  seq: 3
+}
+
+ws {
+  url: {{ws_url}}/api/v1/analysis/stream/{{job_id}}?token={{firebase_token}}
+}

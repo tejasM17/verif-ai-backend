@@ -25,6 +25,8 @@ class ResumeAgentResult(BaseModel):
     skill_inflation_score: float
     timeline_consistency_score: float
     overall_resume_trust: float
+    skills_claimed: List[str] = Field(default_factory=list)
+    experience_start_dates: Dict[str, str] = Field(default_factory=dict, description="Company name to ISO start date")
     flags: List[AgentFlag]
     research_steps: List[ResearchStep]
     summary: str
@@ -34,6 +36,7 @@ class CertAgentResult(BaseModel):
     issuer_verified: bool
     visual_tampering_score: float
     overall_cert_trust: float
+    course_names: List[str] = Field(default_factory=list)
     flags: List[AgentFlag]
     research_steps: List[ResearchStep]
     summary: str
@@ -43,6 +46,8 @@ class GitHubAgentResult(BaseModel):
     skill_match_score: float
     commit_authenticity_score: float
     overall_github_trust: float
+    languages_used: List[str] = Field(default_factory=list)
+    earliest_commit_by_language: Dict[str, str] = Field(default_factory=dict, description="Language to ISO date")
     flags: List[AgentFlag]
     research_steps: List[ResearchStep]
     summary: str
