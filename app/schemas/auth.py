@@ -20,6 +20,21 @@ class UserRegisterRequest(BaseModel):
     role: Literal["student", "recruiter"]
     display_name: Optional[str] = None
 
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenData(BaseModel):
+    idToken: str
+    refreshToken: str
+    expiresIn: str
+    localId: str
+
+class AuthResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[dict] = None
+
 class UserResponse(BaseModel):
     # Using 'id' and allowing it to be populated from '_id' or 'id'
     id: Annotated[str, BeforeValidator(str_validator)] = Field(alias="_id")
@@ -37,5 +52,14 @@ class UserResponse(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
+class UserAuthResponse(BaseModel):
+    user: UserResponse
+    idToken: str
+    refreshToken: str
+    expiresIn: str
+
 class RoleUpdateRequest(BaseModel):
     role: Literal["student", "recruiter"]
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

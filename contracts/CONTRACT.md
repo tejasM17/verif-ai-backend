@@ -34,7 +34,7 @@
 
 ### Auth
 - **POST** `/api/v1/auth/register`
-  - Description: Register a new user in Firebase Auth and sync with local databases. Returns user data and a valid `idToken`.
+  - Description: Register a new user in Firebase Auth and sync with local databases. Returns user data and valid tokens.
   - Headers: None (Public)
   - Request Body:
     ```json
@@ -59,7 +59,55 @@
           "display_name": "string",
           "created_at": "ISO-8601"
         },
-        "idToken": "valid_firebase_jwt"
+        "idToken": "string",
+        "refreshToken": "string",
+        "expiresIn": "string"
+      }
+    }
+    ```
+
+- **POST** `/api/v1/auth/login`
+  - Description: Login user via Firebase and return profile + tokens.
+  - Headers: None (Public)
+  - Request Body:
+    ```json
+    {
+      "email": "test@example.com",
+      "password": "password123"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Login successful",
+      "data": {
+        "user": { ...user_data... },
+        "idToken": "string",
+        "refreshToken": "string",
+        "expiresIn": "string"
+      }
+    }
+    ```
+
+- **POST** `/api/v1/auth/refresh`
+  - Description: Exchange a refresh token for a new ID token.
+  - Headers: None (Public)
+  - Request Body:
+    ```json
+    {
+      "refresh_token": "string"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Token refreshed successfully",
+      "data": {
+        "idToken": "string",
+        "refreshToken": "string",
+        "expiresIn": "string"
       }
     }
     ```

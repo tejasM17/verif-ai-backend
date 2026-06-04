@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.firebase import verify_firebase_token, get_firestore, require_recruiter
 from app.models.user import User
-from app.schemas.auth import UserSyncRequest, UserResponse, RoleUpdateRequest, UserRegisterRequest
+from app.schemas.auth import (
+    UserSyncRequest, 
+    UserResponse, 
+    RoleUpdateRequest, 
+    UserRegisterRequest, 
+    UserLoginRequest, 
+    RefreshTokenRequest
+)
 from datetime import datetime
 import firebase_admin
 from firebase_admin import auth
@@ -15,8 +22,6 @@ async def set_firebase_role(uid: str, role: str):
     Set custom claims in Firebase Auth for RBAC.
     """
     try:
-        # firebase_admin is synchronous, but we call it here.
-        # In a high-traffic app, use anyio.to_thread.run_sync
         auth.set_custom_user_claims(uid, {"role": role})
     except Exception as e:
         print(f"⚠️ Failed to set custom claims for {uid}: {e}")
@@ -51,6 +56,8 @@ async def register_user(request: UserRegisterRequest):
         fb_data = resp.json()
         firebase_uid = fb_data["localId"]
         id_token = fb_data["idToken"]
+        refresh_token = fb_data["refreshToken"]
+        expires_in = fb_data["expiresIn"]
 
     # 2. Update display name & Set Custom Claims in Firebase Auth
     try:
@@ -89,9 +96,105 @@ async def register_user(request: UserRegisterRequest):
         "message": "User registered and synced successfully",
         "data": {
             "user": UserResponse.model_validate(user, from_attributes=True),
-            "idToken": id_token
+            "idToken": id_token,
+            "refreshToken": refresh_token,
+            "expiresIn": expires_in
         }
     }
+
+@router.post("/login")
+async def login_user(request: UserLoginRequest):
+    """
+    Login user via Firebase REST API and return user profile + tokens.
+    """
+    firebase_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={settings.FIREBASE_API_KEY}"
+    
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(firebase_url, json={
+            "email": request.email,
+            "password": request.password,
+            "returnSecureToken": True
+        })
+        
+        if resp.status_code != 200:
+            error_data = resp.json()
+            raise HTTPException(
+                status_code=resp.status_code,
+                detail={
+                    "success": False,
+                    "error": "Login Failed",
+                    "detail": error_data.get("error", {}).get("message", "Invalid email or password")
+                }
+            )
+        
+        fb_data = resp.json()
+        firebase_uid = fb_data["localId"]
+        id_token = fb_data["idToken"]
+        refresh_token = fb_data["refreshToken"]
+        expires_in = fb_data["expiresIn"]
+
+    # Get user from MongoDB
+    user = await User.find_one(User.firebase_uid == firebase_uid)
+    if not user:
+        # Fallback: create user if they exist in Firebase but not in our DB
+        try:
+            user_info = auth.get_user(firebase_uid)
+            user = User(
+                firebase_uid=firebase_uid,
+                email=user_info.email,
+                role=user_info.custom_claims.get("role", "student") if user_info.custom_claims else "student",
+                display_name=user_info.display_name
+            )
+            await user.insert()
+        except Exception as e:
+            print(f"⚠️ Error fetching user info for fallback: {e}")
+            raise HTTPException(status_code=404, detail="User not found in system")
+
+    return {
+        "success": True,
+        "message": "Login successful",
+        "data": {
+            "user": UserResponse.model_validate(user, from_attributes=True),
+            "idToken": id_token,
+            "refreshToken": refresh_token,
+            "expiresIn": expires_in
+        }
+    }
+
+@router.post("/refresh")
+async def refresh_token_endpoint(request: RefreshTokenRequest):
+    """
+    Exchange a refresh token for a new ID token.
+    """
+    firebase_url = f"https://securetoken.googleapis.com/v1/token?key={settings.FIREBASE_API_KEY}"
+    
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(firebase_url, data={
+            "grant_type": "refresh_token",
+            "refresh_token": request.refresh_token
+        })
+        
+        if resp.status_code != 200:
+            error_data = resp.json()
+            raise HTTPException(
+                status_code=resp.status_code,
+                detail={
+                    "success": False,
+                    "error": "Refresh Failed",
+                    "detail": error_data.get("error", {}).get("message", "Invalid refresh token")
+                }
+            )
+        
+        fb_data = resp.json()
+        return {
+            "success": True,
+            "message": "Token refreshed successfully",
+            "data": {
+                "idToken": fb_data["id_token"],
+                "refreshToken": fb_data["refresh_token"],
+                "expiresIn": fb_data["expires_in"]
+            }
+        }
 
 @router.post("/sync")
 async def sync_user(
