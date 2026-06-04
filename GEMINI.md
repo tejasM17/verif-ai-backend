@@ -416,8 +416,9 @@ services:
 - [x] `services/tools/pdf_tools.py`
 - [x] `services/tools/image_tools.py` (ELA mandatory)
 - [x] `services/tools/github_tools.py`
+- [x] `services/tools/web_tools.py`
 - [ ] `services/graph/supervisor.py`
-- [ ] `services/graph/resume_node.py`
+- [x] `services/graph/resume_node.py`
 - [ ] `services/graph/certificate_node.py`
 - [ ] `services/graph/github_node.py`
 - [ ] `services/graph/cross_reference.py`
@@ -443,6 +444,6 @@ services:
 - [ ] `render.yaml` + deployed to Render
 - [ ] `README.md` updated
 
-**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 3.1 Tools & State implemented)
+**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 3.2 Resume Agent Node implemented)
 ---
 
