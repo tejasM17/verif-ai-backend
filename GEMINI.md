@@ -388,14 +388,14 @@ services:
 ## 📌 PROJECT STATUS — AGENTS AUTO-UPDATE THIS
 
 ### Phase 0: Foundation
-- [ ] `requirements.txt`
-- [ ] `.env.example` + `.gitignore`
-- [ ] `core/config.py`
-- [ ] `core/database.py` (Motor + GridFS)
-- [ ] `core/firebase.py` (Admin + Firestore + JWT deps)
-- [ ] `core/langchain_setup.py`
-- [ ] `main.py` (lifespan + CORS + health endpoint)
-- [ ] `contracts/CONTRACT.md` (initial empty shell)
+- [x] `requirements.txt`
+- [x] `.env.example` + `.gitignore`
+- [x] `core/config.py`
+- [x] `core/database.py` (Motor + GridFS)
+- [x] `core/firebase.py` (Admin + Firestore + JWT deps)
+- [x] `core/langchain_setup.py`
+- [x] `main.py` (lifespan + CORS + health endpoint)
+- [x] `contracts/CONTRACT.md` (initial empty shell)
 
 ### Phase 1: Auth
 - [ ] `models/user.py`
@@ -442,4 +442,4 @@ services:
 - [ ] `render.yaml` + deployed to Render
 - [ ] `README.md` updated
 
-**contracts/CONTRACT.md last updated:** _not yet — agent updates this_
+**contracts/CONTRACT.md last updated:** Thursday, 4 June 2026

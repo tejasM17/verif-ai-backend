@@ -8,4 +8,25 @@
 - Production: https://verif-ai-backend.onrender.com
 
 ## Endpoints
-(populated as endpoints are built)
+
+### System
+- **GET** `/health`
+  - Description: Check API health and current environment.
+  - Response:
+    ```json
+    {
+      "status": "healthy",
+      "environment": "development"
+    }
+    ```
+
+- **GET** `/`
+  - Description: Welcome message and link to Swagger UI.
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Welcome to VERIF-AI API",
+      "docs": "/docs"
+    }
+    ```
