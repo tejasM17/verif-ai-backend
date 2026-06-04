@@ -417,17 +417,18 @@ services:
 - [x] `services/tools/image_tools.py` (ELA mandatory)
 - [x] `services/tools/github_tools.py`
 - [x] `services/tools/web_tools.py`
-- [ ] `services/graph/supervisor.py`
+- [x] `services/graph/supervisor.py`
 - [x] `services/graph/resume_node.py`
 - [x] `services/graph/certificate_node.py`
 - [x] `services/graph/github_node.py`
-- [ ] `services/graph/cross_reference.py`
-- [ ] `services/graph/final_decision.py`
-- [ ] `services/graph/graph_builder.py`
-- [ ] `services/streaming.py`
-- [ ] `services/trust_score.py`
-- [ ] `api/v1/analysis.py`
-- [ ] Bruno: analysis collection created
+- [x] `services/graph/cross_reference.py`
+- [x] `services/graph/final_decision.py`
+- [x] `services/graph/graph_builder.py`
+- [x] `services/streaming.py`
+- [x] `services/trust_score.py`
+- [x] `api/v1/analysis.py`
+- [x] Bruno: analysis collection created
+
 
 ### Phase 4: Discovery
 - [ ] `services/discovery_service.py`

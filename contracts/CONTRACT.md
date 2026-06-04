@@ -257,4 +257,59 @@
     }
     ```
 
+### Analysis
+- **POST** `/api/v1/analysis/start`
+  - Description: Start the multi-agent verification process. Returns a job ID and WebSocket URL.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
+  - Request Body:
+    ```json
+    {
+      "student_uid": "string",
+      "resume_document_id": "string",
+      "cert_doc_ids": ["string"],
+      "github_url": "string"
+    }
+    ```
+  - Response (202 Accepted):
+    ```json
+    {
+      "job_id": "string",
+      "websocket_url": "string"
+    }
+    ```
+
+- **WebSocket** `/api/v1/analysis/stream/{job_id}`
+  - Description: Stream real-time research logs and progress tokens.
+  - Query Params: `?token=<firebase_id_token>`
+  - Message Format (JSON):
+    ```json
+    {
+      "type": "thinking_token | research_step_start | research_step_complete | analysis_complete | error",
+      "data": { ...event_data... }
+    }
+    ```
+
+- **GET** `/api/v1/analysis/result/{student_uid}`
+  - Description: Fetch the latest verification result for a student.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student or Recruiter)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "verification": {
+          "student_uid": "string",
+          "trust_score": float,
+          "verdict": "AUTHENTIC | FLAGGED | SUSPICIOUS | FAKE",
+          "resume_score": float,
+          "cert_score": float,
+          "github_score": float,
+          "flags": [],
+          "created_at": "ISO-8601"
+        },
+        "agent_results": [ ...list of 3 agent results... ]
+      }
+    }
+    ```
+
 ---
