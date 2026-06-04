@@ -411,11 +411,11 @@ services:
 
 
 ### Phase 3: LangGraph Agents
-- [ ] `services/graph/state.py`
-- [ ] `services/tools/stylometry_tools.py`
-- [ ] `services/tools/pdf_tools.py`
-- [ ] `services/tools/image_tools.py` (ELA mandatory)
-- [ ] `services/tools/github_tools.py`
+- [x] `services/graph/state.py`
+- [x] `services/tools/stylometry_tools.py`
+- [x] `services/tools/pdf_tools.py`
+- [x] `services/tools/image_tools.py` (ELA mandatory)
+- [x] `services/tools/github_tools.py`
 - [ ] `services/graph/supervisor.py`
 - [ ] `services/graph/resume_node.py`
 - [ ] `services/graph/certificate_node.py`
@@ -443,6 +443,6 @@ services:
 - [ ] `render.yaml` + deployed to Render
 - [ ] `README.md` updated
 
-**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Multi-file upload + expanded formats + readiness check)
+**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 3.1 Tools & State implemented)
 ---
 
