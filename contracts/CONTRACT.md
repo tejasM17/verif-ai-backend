@@ -11,12 +11,13 @@
 
 ### System
 - **GET** `/health`
-  - Description: Check API health and current environment.
+  - Description: Check API health and connectivity to external services.
   - Response:
     ```json
     {
       "status": "healthy",
-      "environment": "development"
+      "mongodb": "connected",
+      "firebase": "connected"
     }
     ```
 
@@ -25,8 +26,8 @@
   - Response:
     ```json
     {
-      "success": true,
-      "message": "Welcome to VERIF-AI API",
-      "docs": "/docs"
+      "message": "VERIF-AI API",
+      "docs": "/docs",
+      "version": "1.0.0"
     }
     ```
