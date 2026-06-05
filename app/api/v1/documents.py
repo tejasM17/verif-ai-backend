@@ -181,18 +181,28 @@ async def upload_document(
 
 @router.post("/github", response_model=APIResponse, status_code=201)
 async def submit_github(
-    request: GitHubSubmitRequest,
+    payload: GitHubSubmitRequest,
     user: Annotated[dict, Depends(require_student)]
 ):
-    url = request.github_url.strip()
-    if not url.startswith("https://github.com/"):
-        raise HTTPException(status_code=400, detail="Invalid GitHub URL. Must start with https://github.com/")
+    url = payload.github_url.strip()
     
-    parts = url.replace("https://github.com/", "").split("/")
-    if len(parts) < 1 or not parts[0]:
+    # Normalize URL: ensure it starts with https://
+    if url.startswith("github.com"):
+        url = "https://" + url
+    elif not url.startswith("https://github.com"):
+        raise HTTPException(
+            status_code=400, 
+            detail="Invalid GitHub URL. Must be a github.com profile link."
+        )
+    
+    # Ensure it's not just the base domain
+    clean_path = url.replace("https://github.com", "").replace("/", "").strip()
+    if not clean_path:
         raise HTTPException(status_code=400, detail="Invalid GitHub URL. Missing username.")
 
     hash_sha256 = hashlib.sha256(url.encode()).hexdigest()
+    
+    logger.info(f"Submitting GitHub URL: {url} for user {user['uid']}")
     
     # Check if exists
     existing = await Document.find_one(

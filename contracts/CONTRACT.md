@@ -213,7 +213,7 @@
     ```
 
 - **POST** `/api/v1/documents/github`
-  - Description: Submit a GitHub profile URL for analysis.
+  - Description: Submit a GitHub profile URL for analysis. Supports URLs starting with `https://github.com/` or just `github.com/`.
   - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
   - Request Body:
     ```json
