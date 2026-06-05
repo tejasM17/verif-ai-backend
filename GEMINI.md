@@ -445,6 +445,6 @@ services:
 - [ ] `render.yaml` + deployed to Render
 - [ ] `README.md` updated
 
-**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 3.4 GitHub Agent Node implemented)
+**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 4.1: Profile + Discovery Implementation)
 ---
 

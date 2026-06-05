@@ -1,0 +1,11 @@
+meta {
+  name: "Get My Verification"
+  type: "http"
+  seq: 1
+}
+
+get {
+  url: {{backend_url}}/api/v1/verification/my
+  body: none
+  auth: inherit
+}

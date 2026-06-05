@@ -1,0 +1,11 @@
+meta {
+  name: "Shortlist Student"
+  type: "http"
+  seq: 3
+}
+
+post {
+  url: {{backend_url}}/api/v1/discover/shortlist/{{student_uid}}
+  body: none
+  auth: inherit
+}

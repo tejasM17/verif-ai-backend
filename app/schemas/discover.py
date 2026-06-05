@@ -1,22 +1,15 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from app.schemas.profile import ProfileResponse
+from app.schemas.profile import PublicProfile
 
-class DiscoveryQuery(BaseModel):
-    skills: List[str] = Field(default_factory=list)
-    min_trust_score: float = 0.0
+class SearchQuery(BaseModel):
+    skills: Optional[List[str]] = None
+    min_trust: float = 0.0
     domain: Optional[str] = None
     location: Optional[str] = None
     limit: int = 20
     offset: int = 0
 
-class DiscoveryResponse(BaseModel):
+class SearchResult(BaseModel):
+    profiles: List[PublicProfile]
     total: int
-    results: List[ProfileResponse]
-
-class ShortlistRequest(BaseModel):
-    student_uid: str
-
-class ShortlistResponse(BaseModel):
-    success: bool
-    message: str

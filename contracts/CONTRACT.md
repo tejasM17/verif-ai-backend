@@ -315,108 +315,115 @@
 ---
 
 ### Profile
-- **GET** `/api/v1/profile/me`
-  - Description: Get the current user's profile. Creates a default profile if it doesn't exist.
-  - Headers: `Authorization: Bearer <firebase_id_token>`
-  - Response:
-    ```json
-    {
-      "display_name": "string",
-      "bio": "string",
-      "skills": ["string"],
-      "domain": "string",
-      "location": "string",
-      "is_public": boolean,
-      "firebase_uid": "string",
-      "trust_score": float,
-      "verdict": "string",
-      "verified_at": "ISO-8601",
-      "created_at": "ISO-8601",
-      "updated_at": "ISO-8601"
-    }
-    ```
-
-- **PATCH** `/api/v1/profile/me`
-  - Description: Update the current user's profile.
-  - Headers: `Authorization: Bearer <firebase_id_token>`
+- **PUT** `/api/v1/profile/update`
+  - Description: Update student profile details and optionally publish it.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
   - Request Body:
     ```json
     {
-      "display_name": "string",
-      "bio": "string",
       "skills": ["string"],
       "domain": "string",
       "location": "string",
+      "bio": "string",
       "is_public": boolean
-    }
-    ```
-  - Response: Updated Profile object.
-
-- **GET** `/api/v1/profile/{uid}`
-  - Description: Get a specific user's profile. Access restricted if profile is not public.
-  - Headers: `Authorization: Bearer <firebase_id_token>`
-  - Response: Profile object.
-
-### Discovery
-- **POST** `/api/v1/discover/search`
-  - Description: Recruiters search for verified students using various filters.
-  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
-  - Request Body:
-    ```json
-    {
-      "skills": ["string"],
-      "min_trust_score": float,
-      "domain": "string",
-      "location": "string",
-      "limit": int,
-      "offset": int
-    }
-    ```
-  - Response:
-    ```json
-    {
-      "total": int,
-      "results": [ ...ProfileResponse objects... ]
-    }
-    ```
-
-- **POST** `/api/v1/discover/shortlist`
-  - Description: Add a student to the recruiter's shortlist.
-  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
-  - Request Body:
-    ```json
-    {
-      "student_uid": "string"
     }
     ```
   - Response:
     ```json
     {
       "success": true,
-      "message": "Student shortlisted successfully"
+      "data": { ...PublicProfile... }
+    }
+    ```
+
+- **POST** `/api/v1/profile/publish`
+  - Description: Make student profile public.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Profile published"
+    }
+    ```
+
+- **POST** `/api/v1/profile/unpublish`
+  - Description: Make student profile private.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Profile unpublished"
+    }
+    ```
+
+- **GET** `/api/v1/profile/{uid}`
+  - Description: Get a public profile by UID. No auth required if profile is public.
+  - Response: `PublicProfile` object.
+
+### Discovery
+- **GET** `/api/v1/discover`
+  - Description: List all public profiles paginated.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
+  - Query Params: `limit=20`, `offset=0`
+  - Response: `SearchResult` object.
+
+- **GET** `/api/v1/discover/search`
+  - Description: Search public profiles with filters.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
+  - Query Params: `skills`, `min_trust`, `domain`, `location`, `limit`, `offset`
+  - Response: `SearchResult` object.
+
+- **POST** `/api/v1/discover/shortlist/{uid}`
+  - Description: Add student to recruiter's shortlist.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "message": "Student shortlisted"
     }
     ```
 
 - **GET** `/api/v1/discover/shortlist`
-  - Description: Get all shortlisted students for the recruiter.
+  - Description: Get all shortlisted profiles for the recruiter.
   - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
-  - Response: List of Profile objects.
+  - Response: List of `PublicProfile` objects.
 
 ### Verification
-- **GET** `/api/v1/verification/{verification_id}`
-  - Description: Get full details of a specific verification run, including agent results and research logs.
+- **GET** `/api/v1/verification/my`
+  - Description: Get student's own latest verification results.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Student only)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "data": { ...verification_data... }
+    }
+    ```
+
+- **GET** `/api/v1/verification/student/{uid}`
+  - Description: Get student's verification results for recruiter if profile is public.
+  - Headers: `Authorization: Bearer <firebase_id_token>` (Recruiter only)
+  - Response:
+    ```json
+    {
+      "success": true,
+      "data": { ...verification_data... }
+    }
+    ```
+
+- **GET** `/api/v1/verification/logs/{result_id}`
+  - Description: Get full research logs for a specific result.
   - Headers: `Authorization: Bearer <firebase_id_token>`
   - Response:
     ```json
     {
       "success": true,
-      "data": {
-        "verification": { ... },
-        "agent_results": [ ... ],
-        "research_logs": [ ... ]
-      }
+      "data": { ...research_logs... }
     }
     ```
 
 ---
-**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 4 Discovery implemented)
+**contracts/CONTRACT.md last updated:** Friday, 5 June 2026 (Phase 4.1: Profile + Discovery Implementation)

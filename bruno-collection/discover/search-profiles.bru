@@ -1,0 +1,16 @@
+meta {
+  name: "Search Profiles"
+  type: "http"
+  seq: 2
+}
+
+get {
+  url: {{backend_url}}/api/v1/discover/search?domain=Software Engineering&min_trust=0.7
+  body: none
+  auth: inherit
+}
+
+query {
+  ~skills: Python
+  ~skills: FastAPI
+}
