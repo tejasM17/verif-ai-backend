@@ -9,10 +9,12 @@ from app.api.auth import router as auth_router
 from app.api.student import router as student_router
 from app.api.recruiter import router as recruiter_router
 from app.api.admin import router as admin_router
+from app.routers.profile_photo import router as profile_photo_router
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.middleware.error_handler import ErrorHandlerMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.utils.rate_limiter import rate_limit_middleware
+from app.database.mongodb import ensure_indexes, close_mongodb_connection
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +26,14 @@ logger = logging.getLogger("verifai")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting VerifAI Backend...")
+    try:
+        ensure_indexes()
+        logger.info("MongoDB indexes ensured.")
+    except Exception as e:
+        logger.warning("MongoDB connection failed: %s", e)
     yield
+    close_mongodb_connection()
+    logger.info("MongoDB connection closed.")
     logger.info("Shutting down VerifAI Backend...")
 
 
@@ -54,6 +63,7 @@ app.include_router(auth_router)
 app.include_router(student_router)
 app.include_router(recruiter_router)
 app.include_router(admin_router)
+app.include_router(profile_photo_router)
 
 
 @app.get("/health", tags=["Health"])

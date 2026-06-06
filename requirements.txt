@@ -9,3 +9,5 @@ pytest==8.3.4
 pytest-asyncio==0.25.0
 python-multipart==0.0.19
 google-cloud-firestore==2.20.1
+pymongo==4.11.3
+Pillow==11.1.0

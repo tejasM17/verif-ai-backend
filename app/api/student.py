@@ -8,11 +8,19 @@ from app.services.student import StudentService
 
 router = APIRouter(prefix="/student", tags=["Student"])
 
+PHOTO_URL = "/student/profile/photo"
+
+
+def _inject_photo_url(student: Student) -> dict:
+    data = StudentResponse(**student.model_dump()).model_dump(mode="json")
+    data["profile_photo_url"] = PHOTO_URL
+    return data
+
 
 @router.get("/me")
 async def get_current_student_info(student: Student = Depends(get_current_student)):
     return success_response(
-        data=StudentResponse(**student.model_dump()).model_dump(),
+        data=_inject_photo_url(student),
         message="Student profile retrieved",
     )
 
@@ -20,7 +28,7 @@ async def get_current_student_info(student: Student = Depends(get_current_studen
 @router.get("/profile")
 async def get_student_profile(student: Student = Depends(get_current_student)):
     return success_response(
-        data=StudentResponse(**student.model_dump()).model_dump(),
+        data=_inject_photo_url(student),
         message="Student profile retrieved",
     )
 
@@ -36,7 +44,7 @@ async def update_student_profile(
         **request.model_dump(exclude_none=True),
     )
     return success_response(
-        data=StudentResponse(**updated.model_dump()).model_dump(),
+        data=_inject_photo_url(updated),
         message="Profile updated successfully",
     )
 

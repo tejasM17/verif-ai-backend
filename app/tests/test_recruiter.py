@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 
 class TestRecruiterEndpoints:
-    @patch("app.auth.firebase.verify_firebase_token")
+    @patch("app.services.auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_recruiter_profile(self, mock_verify, client: AsyncClient):
         mock_verify.return_value = {
@@ -28,7 +28,7 @@ class TestRecruiterEndpoints:
         assert data["success"] is True
         assert data["data"]["recruiter_name"] == "Profile Rec"
 
-    @patch("app.auth.firebase.verify_firebase_token")
+    @patch("app.services.auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_student_cannot_access_recruiter_route(
         self, mock_verify, client: AsyncClient
@@ -47,7 +47,7 @@ class TestRecruiterEndpoints:
         )
         assert resp.status_code == 403
 
-    @patch("app.auth.firebase.verify_firebase_token")
+    @patch("app.services.auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_delete_recruiter_profile(self, mock_verify, client: AsyncClient):
         mock_verify.return_value = {

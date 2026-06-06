@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 
 class TestStudentEndpoints:
-    @patch("app.auth.firebase.verify_firebase_token")
+    @patch("app.services.auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_student_profile(self, mock_verify, client: AsyncClient):
         mock_verify.return_value = {
@@ -25,7 +25,7 @@ class TestStudentEndpoints:
         assert data["success"] is True
         assert data["data"]["full_name"] == "Profile Test"
 
-    @patch("app.auth.firebase.verify_firebase_token")
+    @patch("app.services.auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_recruiter_cannot_access_student_route(
         self, mock_verify, client: AsyncClient

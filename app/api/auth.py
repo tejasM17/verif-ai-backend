@@ -63,13 +63,30 @@ async def refresh_token(request: RefreshTokenRequest):
     return success_response(data=result, message="Token refreshed successfully")
 
 
+@router.get("/me")
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+):
+    if not credentials:
+        raise UnauthorizedException(
+            "Not authenticated",
+            error_code="NO_CREDENTIALS",
+        )
+    service = AuthService()
+    user = await service.get_user_by_token(access_token_str=credentials.credentials)
+    return success_response(data=user, message="User session restored")
+
+
 @router.post("/logout")
 async def logout(
     request: LogoutRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
 ):
     if not credentials:
-        raise UnauthorizedException("Not authenticated")
+        raise UnauthorizedException(
+            "Not authenticated",
+            error_code="NO_CREDENTIALS",
+        )
     service = AuthService()
     await service.logout(
         access_token=credentials.credentials,

@@ -1,6 +1,5 @@
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError
 
 from app.core.security import verify_access_token
 from app.core.exceptions import UnauthorizedException, ForbiddenException
@@ -17,23 +16,29 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
 ) -> Dict[str, Any]:
     if not credentials:
-        raise UnauthorizedException("Not authenticated")
-    try:
-        payload = verify_access_token(credentials.credentials)
-        return payload
-    except JWTError:
-        raise UnauthorizedException("Invalid or expired token")
+        raise UnauthorizedException(
+            "Not authenticated",
+            error_code="NO_CREDENTIALS",
+        )
+    payload = verify_access_token(credentials.credentials)
+    return payload
 
 
 async def get_current_student(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Student:
     if current_user.get("role") != "student":
-        raise ForbiddenException("Access denied. Student role required.")
+        raise ForbiddenException(
+            "Access denied. Student role required.",
+            error_code="ROLE_MISMATCH",
+        )
     repo = StudentRepository()
     student = await repo.get_by_firebase_uid(current_user.get("firebase_uid"))
     if not student or not student.is_active:
-        raise UnauthorizedException("Student not found or inactive")
+        raise UnauthorizedException(
+            "Student not found or inactive",
+            error_code="USER_NOT_FOUND",
+        )
     return student
 
 
@@ -41,17 +46,26 @@ async def get_current_recruiter(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Recruiter:
     if current_user.get("role") != "recruiter":
-        raise ForbiddenException("Access denied. Recruiter role required.")
+        raise ForbiddenException(
+            "Access denied. Recruiter role required.",
+            error_code="ROLE_MISMATCH",
+        )
     repo = RecruiterRepository()
     recruiter = await repo.get_by_firebase_uid(current_user.get("firebase_uid"))
     if not recruiter or not recruiter.is_active:
-        raise UnauthorizedException("Recruiter not found or inactive")
+        raise UnauthorizedException(
+            "Recruiter not found or inactive",
+            error_code="USER_NOT_FOUND",
+        )
     return recruiter
 
 
 def role_required(required_role: str):
     async def role_checker(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
         if current_user.get("role") != required_role:
-            raise ForbiddenException(f"Access denied. {required_role.capitalize()} role required.")
+            raise ForbiddenException(
+                f"Access denied. {required_role.capitalize()} role required.",
+                error_code="ROLE_MISMATCH",
+            )
         return current_user
     return role_checker

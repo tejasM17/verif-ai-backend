@@ -10,6 +10,7 @@ class StudentResponse(BaseModel):
     email: str
     phone: Optional[str] = None
     profile_image: Optional[str] = None
+    profile_photo_url: Optional[str] = None
     college_name: Optional[str] = None
     branch: Optional[str] = None
     graduation_year: Optional[int] = None
@@ -25,6 +26,7 @@ class StudentUpdateRequest(BaseModel):
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
     phone: Optional[str] = Field(None, max_length=20)
     profile_image: Optional[str] = None
+    profile_photo_url: Optional[str] = None
     college_name: Optional[str] = Field(None, max_length=255)
     branch: Optional[str] = Field(None, max_length=255)
     graduation_year: Optional[int] = None

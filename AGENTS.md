@@ -61,6 +61,7 @@ SecurityHeaders → RequestLogging → ErrorHandler → rate_limit → CORS
 ```
 
 ## Tests
+if new end point is added then update that endpoint in testing.md file
 
 ```bash
 pytest app/tests/ -v

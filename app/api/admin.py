@@ -22,8 +22,8 @@ async def get_all_users(
     recruiters = await recruiter_repo.get_all(skip=skip, limit=limit)
     return success_response(
         data={
-            "students": [StudentResponse(**s).model_dump() for s in students],
-            "recruiters": [RecruiterResponse(**r).model_dump() for r in recruiters],
+            "students": [StudentResponse(**s).model_dump(mode="json") for s in students],
+            "recruiters": [RecruiterResponse(**r).model_dump(mode="json") for r in recruiters],
             "total_students": len(students),
             "total_recruiters": len(recruiters),
         },
@@ -40,7 +40,7 @@ async def get_all_students(
     repo = StudentRepository()
     students = await repo.get_all(skip=skip, limit=limit)
     return success_response(
-        data=[StudentResponse(**s).model_dump() for s in students],
+        data=[StudentResponse(**s).model_dump(mode="json") for s in students],
         message="All students retrieved",
     )
 
@@ -54,7 +54,7 @@ async def get_all_recruiters(
     repo = RecruiterRepository()
     recruiters = await repo.get_all(skip=skip, limit=limit)
     return success_response(
-        data=[RecruiterResponse(**r).model_dump() for r in recruiters],
+        data=[RecruiterResponse(**r).model_dump(mode="json") for r in recruiters],
         message="All recruiters retrieved",
     )
 

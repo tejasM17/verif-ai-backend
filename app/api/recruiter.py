@@ -12,7 +12,7 @@ router = APIRouter(prefix="/recruiter", tags=["Recruiter"])
 @router.get("/me")
 async def get_current_recruiter_info(recruiter: Recruiter = Depends(get_current_recruiter)):
     return success_response(
-        data=RecruiterResponse(**recruiter.model_dump()).model_dump(),
+        data=RecruiterResponse(**recruiter.model_dump()).model_dump(mode="json"),
         message="Recruiter profile retrieved",
     )
 
@@ -20,7 +20,7 @@ async def get_current_recruiter_info(recruiter: Recruiter = Depends(get_current_
 @router.get("/profile")
 async def get_recruiter_profile(recruiter: Recruiter = Depends(get_current_recruiter)):
     return success_response(
-        data=RecruiterResponse(**recruiter.model_dump()).model_dump(),
+        data=RecruiterResponse(**recruiter.model_dump()).model_dump(mode="json"),
         message="Recruiter profile retrieved",
     )
 
@@ -36,7 +36,7 @@ async def update_recruiter_profile(
         **request.model_dump(exclude_none=True),
     )
     return success_response(
-        data=RecruiterResponse(**updated.model_dump()).model_dump(),
+        data=RecruiterResponse(**updated.model_dump()).model_dump(mode="json"),
         message="Profile updated successfully",
     )
 

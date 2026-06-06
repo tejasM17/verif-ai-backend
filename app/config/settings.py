@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: list[str] = ["*"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
 
+    MONGODB_URL: str = "mongodb://verifai:verifai@ac-rhlsblf-shard-00-00.n8mdgy4.mongodb.net:27017,ac-rhlsblf-shard-00-01.n8mdgy4.mongodb.net:27017,ac-rhlsblf-shard-00-02.n8mdgy4.mongodb.net:27017/?ssl=true&replicaSet=atlas-ju8z1t-shard-0&authSource=admin&appName=Cluster0"
+    MONGODB_DATABASE: str = "verifai"
+    MONGODB_COLLECTION_PROFILE_IMAGES: str = "profile_images"
+
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 10
     RATE_LIMIT_WINDOW_SECONDS: int = 60
