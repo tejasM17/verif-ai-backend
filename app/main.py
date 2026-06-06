@@ -36,6 +36,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(ErrorHandlerMiddleware)
+
+app.middleware("http")(rate_limit_middleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -43,11 +49,6 @@ app.add_middleware(
     allow_methods=settings.CORS_ALLOW_METHODS,
     allow_headers=settings.CORS_ALLOW_HEADERS,
 )
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RequestLoggingMiddleware)
-app.add_middleware(ErrorHandlerMiddleware)
-
-app.middleware("http")(rate_limit_middleware)
 
 app.include_router(auth_router)
 app.include_router(student_router)

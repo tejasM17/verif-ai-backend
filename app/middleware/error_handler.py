@@ -16,14 +16,17 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         except AppException as exc:
-            logger.warning("AppException: %s", exc.message)
+            logger.warning("AppException: %s (error_code=%s)", exc.message, exc.error_code)
+            content = {
+                "success": False,
+                "message": exc.message,
+                "errors": exc.errors,
+            }
+            if exc.error_code:
+                content["error_code"] = exc.error_code
             return JSONResponse(
                 status_code=exc.status_code,
-                content={
-                    "success": False,
-                    "message": exc.message,
-                    "errors": exc.errors,
-                },
+                content=content,
             )
         except Exception as exc:
             logger.error("Unhandled exception: %s", str(exc), exc_info=True)

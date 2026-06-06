@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime, timezone, timedelta
 
@@ -18,6 +19,8 @@ from app.repositories.student import StudentRepository
 from app.repositories.recruiter import RecruiterRepository
 from app.repositories.token_blacklist import TokenBlacklistRepository
 
+logger = logging.getLogger("verifai")
+
 
 class AuthService:
     def __init__(self):
@@ -32,11 +35,21 @@ class AuthService:
         firebase_uid = decoded_token["uid"]
         email = decoded_token.get("email", "")
 
+        logger.info(
+            "Register student: firebase_uid=%s email=%s checking collection=students",
+            firebase_uid, email,
+        )
         existing = await self.student_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Register student: existing student=%s", existing is not None)
         if existing:
             raise ConflictException("Student already registered")
 
+        logger.info(
+            "Register student: firebase_uid=%s email=%s checking collection=recruiters",
+            firebase_uid, email,
+        )
         existing_rec = await self.recruiter_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Register student: existing recruiter=%s", existing_rec is not None)
         if existing_rec:
             raise ConflictException("This Firebase account is already registered as a recruiter")
 
@@ -79,11 +92,21 @@ class AuthService:
         firebase_uid = decoded_token["uid"]
         email = decoded_token.get("email", "")
 
+        logger.info(
+            "Register recruiter: firebase_uid=%s email=%s checking collection=recruiters",
+            firebase_uid, email,
+        )
         existing = await self.recruiter_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Register recruiter: existing recruiter=%s", existing is not None)
         if existing:
             raise ConflictException("Recruiter already registered")
 
+        logger.info(
+            "Register recruiter: firebase_uid=%s email=%s checking collection=students",
+            firebase_uid, email,
+        )
         existing_st = await self.student_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Register recruiter: existing student=%s", existing_st is not None)
         if existing_st:
             raise ConflictException("This Firebase account is already registered as a student")
 
@@ -122,7 +145,13 @@ class AuthService:
         firebase_uid = decoded_token["uid"]
         email = decoded_token.get("email", "")
 
+        logger.info(
+            "Login lookup: firebase_uid=%s email=%s collection=students field=firebase_uid",
+            firebase_uid, email,
+        )
         student = await self.student_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Login lookup: student exists=%s", student is not None)
+
         if student:
             if not student.is_active:
                 raise UnauthorizedException("Student account is deactivated")
@@ -143,7 +172,13 @@ class AuthService:
                 },
             }
 
+        logger.info(
+            "Login lookup: firebase_uid=%s email=%s collection=recruiters field=firebase_uid",
+            firebase_uid, email,
+        )
         recruiter = await self.recruiter_repo.get_by_firebase_uid(firebase_uid)
+        logger.info("Login lookup: recruiter exists=%s", recruiter is not None)
+
         if recruiter:
             if not recruiter.is_active:
                 raise UnauthorizedException("Recruiter account is deactivated")
@@ -164,7 +199,14 @@ class AuthService:
                 },
             }
 
-        raise NotFoundException("User not found. Please register first.")
+        logger.warning(
+            "Login failed: user not registered. firebase_uid=%s email=%s",
+            firebase_uid, email,
+        )
+        raise NotFoundException(
+            "User not found. Please register first.",
+            error_code="USER_NOT_REGISTERED",
+        )
 
     async def refresh_token(self, refresh_token_str: str) -> dict:
         if await self.token_blacklist_repo.is_blacklisted(refresh_token_str):
