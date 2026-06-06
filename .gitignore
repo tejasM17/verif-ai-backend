@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.db
+*.log
+.env
+*.pyc
+.DS_Store
+.pytest_cache/
+*.egg
+.vercel
+firebase-service-account.json
