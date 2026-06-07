@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict
 
@@ -24,6 +25,7 @@ def create_access_token(
         "email": email,
         "role": role,
         "type": "access",
+        "jti": uuid.uuid4().hex,
     }
     expire = now + (
         expires_delta
@@ -45,6 +47,7 @@ def create_refresh_token(
         "sub": user_id,
         "role": role,
         "type": "refresh",
+        "jti": uuid.uuid4().hex,
     }
     expire = now + (
         expires_delta
@@ -69,7 +72,7 @@ def verify_access_token(token: str) -> Dict[str, Any]:
             )
             raise UnauthorizedException(
                 "Invalid token type",
-                error_code="INVALID_TOKEN_TYPE",
+                error_code="TOKEN_INVALID",
             )
         return payload
     except ExpiredSignatureError:
@@ -79,7 +82,7 @@ def verify_access_token(token: str) -> Dict[str, Any]:
         )
         raise UnauthorizedException(
             "Access token has expired",
-            error_code="ACCESS_TOKEN_EXPIRED",
+            error_code="TOKEN_EXPIRED",
         )
     except JWTError as e:
         logger.warning(
@@ -88,7 +91,7 @@ def verify_access_token(token: str) -> Dict[str, Any]:
         )
         raise UnauthorizedException(
             "Invalid access token",
-            error_code="INVALID_ACCESS_TOKEN",
+            error_code="TOKEN_INVALID",
         )
 
 
@@ -105,7 +108,7 @@ def verify_refresh_token(token: str) -> Dict[str, Any]:
             )
             raise UnauthorizedException(
                 "Invalid token type",
-                error_code="INVALID_TOKEN_TYPE",
+                error_code="TOKEN_INVALID",
             )
         return payload
     except ExpiredSignatureError:
@@ -115,7 +118,7 @@ def verify_refresh_token(token: str) -> Dict[str, Any]:
         )
         raise UnauthorizedException(
             "Refresh token has expired",
-            error_code="REFRESH_TOKEN_EXPIRED",
+            error_code="TOKEN_EXPIRED",
         )
     except JWTError as e:
         logger.warning(
@@ -124,5 +127,5 @@ def verify_refresh_token(token: str) -> Dict[str, Any]:
         )
         raise UnauthorizedException(
             "Invalid refresh token",
-            error_code="INVALID_REFRESH_TOKEN",
+            error_code="TOKEN_INVALID",
         )

@@ -49,6 +49,19 @@ def _get_all_documents(collection: str, skip: int = 0, limit: int = 100) -> list
     return [doc.to_dict() for doc in docs]
 
 
+def _get_all_documents_by_field(collection: str, field: str, value: Any, skip: int = 0, limit: int = 100) -> list[dict]:
+    docs = db.collection(collection).where(field, "==", value).offset(skip).limit(limit).get()
+    return [doc.to_dict() for doc in docs]
+
+
+def _get_filtered_documents(collection: str, filters: list[tuple[str, str, Any]], skip: int = 0, limit: int = 100) -> list[dict]:
+    query = db.collection(collection)
+    for field, op, value in filters:
+        query = query.where(field, op, value)
+    docs = query.offset(skip).limit(limit).get()
+    return [doc.to_dict() for doc in docs]
+
+
 def _count_documents(collection: str) -> int:
     return len(db.collection(collection).get())
 
@@ -75,6 +88,12 @@ class BaseRepository:
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[dict]:
         return await asyncio.to_thread(_get_all_documents, self.collection_name, skip, limit)
+
+    async def get_all_by_field(self, field: str, value: Any, skip: int = 0, limit: int = 100) -> list[dict]:
+        return await asyncio.to_thread(_get_all_documents_by_field, self.collection_name, field, value, skip, limit)
+
+    async def filter_by(self, filters: list[tuple[str, str, Any]], skip: int = 0, limit: int = 100) -> list[dict]:
+        return await asyncio.to_thread(_get_filtered_documents, self.collection_name, filters, skip, limit)
 
     async def update(self, doc_id: str, **kwargs) -> bool:
         data = {**kwargs, "updated_at": datetime.now(timezone.utc)}

@@ -29,9 +29,19 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: list[str] = ["*"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
 
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"
+
     MONGODB_URL: str = "mongodb://verifai:verifai@ac-rhlsblf-shard-00-00.n8mdgy4.mongodb.net:27017,ac-rhlsblf-shard-00-01.n8mdgy4.mongodb.net:27017,ac-rhlsblf-shard-00-02.n8mdgy4.mongodb.net:27017/?ssl=true&replicaSet=atlas-ju8z1t-shard-0&authSource=admin&appName=Cluster0"
     MONGODB_DATABASE: str = "verifai"
     MONGODB_COLLECTION_PROFILE_IMAGES: str = "profile_images"
+    MONGODB_COLLECTION_APPLICATION_FILES: str = "application_files"
+    MONGODB_COLLECTION_AUDIT_LOGS: str = "file_audit_logs"
+
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "models/gemini-2.5-pro-exp-03-25"
+
+    MONGODB_COLLECTION_VERIFICATION_RESULTS: str = "verification_results"
 
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 10

@@ -27,10 +27,32 @@ def get_profile_images_collection():
     return db[settings.MONGODB_COLLECTION_PROFILE_IMAGES]
 
 
+def get_application_files_collection():
+    db = get_database()
+    return db[settings.MONGODB_COLLECTION_APPLICATION_FILES]
+
+
+def get_audit_logs_collection():
+    db = get_database()
+    return db[settings.MONGODB_COLLECTION_AUDIT_LOGS]
+
+
 def ensure_indexes():
-    collection = get_profile_images_collection()
-    collection.create_index([("user_id", ASCENDING)], unique=True)
-    collection.create_index([("firebase_uid", ASCENDING)])
+    profile_collection = get_profile_images_collection()
+    profile_collection.create_index([("user_id", ASCENDING)], unique=True)
+    profile_collection.create_index([("firebase_uid", ASCENDING)])
+
+    files_collection = get_application_files_collection()
+    files_collection.create_index([("application_id", ASCENDING), ("file_type", ASCENDING)], unique=True)
+    files_collection.create_index([("file_id", ASCENDING)], unique=True)
+    files_collection.create_index([("student_id", ASCENDING)])
+    files_collection.create_index([("firebase_uid", ASCENDING)])
+
+    audit_collection = get_audit_logs_collection()
+    audit_collection.create_index([("application_id", ASCENDING)])
+    audit_collection.create_index([("actor_id", ASCENDING)])
+    audit_collection.create_index([("timestamp", ASCENDING)])
+    audit_collection.create_index([("action", ASCENDING)])
 
 
 def close_mongodb_connection():

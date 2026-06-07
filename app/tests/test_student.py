@@ -12,7 +12,7 @@ class TestStudentEndpoints:
             "email": "profile@test.com",
         }
         reg_payload = {"firebase_token": "mock-token", "full_name": "Profile Test"}
-        reg_resp = await client.post("/auth/student/register", json=reg_payload)
+        reg_resp = await client.post("/auth/register/student", json=reg_payload)
         tokens = reg_resp.json()["data"]
         access_token = tokens["access_token"]
 
@@ -39,7 +39,7 @@ class TestStudentEndpoints:
             "company_name": "Corp",
             "recruiter_name": "Rec",
         }
-        reg_resp = await client.post("/auth/recruiter/register", json=reg_payload)
+        reg_resp = await client.post("/auth/register/recruiter", json=reg_payload)
         access_token = reg_resp.json()["data"]["access_token"]
 
         resp = await client.get(

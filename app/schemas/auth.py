@@ -1,10 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
 class StudentRegisterRequest(BaseModel):
-    firebase_token: str = Field(..., description="Firebase ID token")
     full_name: str = Field(..., min_length=1, max_length=255)
+    email: Optional[str] = Field(None, max_length=255)
+    password: Optional[str] = Field(None, min_length=6, max_length=128)
+    firebase_token: Optional[str] = None
     phone: Optional[str] = Field(None, max_length=20)
     profile_image: Optional[str] = None
     college_name: Optional[str] = Field(None, max_length=255)
@@ -15,9 +17,11 @@ class StudentRegisterRequest(BaseModel):
 
 
 class RecruiterRegisterRequest(BaseModel):
-    firebase_token: str = Field(..., description="Firebase ID token")
     company_name: str = Field(..., min_length=1, max_length=255)
     recruiter_name: str = Field(..., min_length=1, max_length=255)
+    email: Optional[str] = Field(None, max_length=255)
+    password: Optional[str] = Field(None, min_length=6, max_length=128)
+    firebase_token: Optional[str] = None
     phone: Optional[str] = Field(None, max_length=20)
     company_website: Optional[str] = Field(None, max_length=255)
     company_logo: Optional[str] = None
@@ -25,19 +29,14 @@ class RecruiterRegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    firebase_token: str = Field(..., description="Firebase ID token from frontend")
+    email: Optional[str] = Field(None, max_length=255)
+    password: Optional[str] = Field(None, min_length=1, max_length=128)
+    firebase_token: Optional[str] = None
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    user: dict
+    refresh_token: str = ""
 
 
 class LogoutRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = ""

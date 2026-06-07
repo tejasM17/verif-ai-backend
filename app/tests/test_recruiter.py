@@ -16,7 +16,7 @@ class TestRecruiterEndpoints:
             "company_name": "Profile Corp",
             "recruiter_name": "Profile Rec",
         }
-        reg_resp = await client.post("/auth/recruiter/register", json=reg_payload)
+        reg_resp = await client.post("/auth/register/recruiter", json=reg_payload)
         access_token = reg_resp.json()["data"]["access_token"]
 
         resp = await client.get(
@@ -38,7 +38,7 @@ class TestRecruiterEndpoints:
             "email": "stud@test.com",
         }
         reg_payload = {"firebase_token": "mock-token", "full_name": "Student User"}
-        reg_resp = await client.post("/auth/student/register", json=reg_payload)
+        reg_resp = await client.post("/auth/register/student", json=reg_payload)
         access_token = reg_resp.json()["data"]["access_token"]
 
         resp = await client.get(
@@ -59,7 +59,7 @@ class TestRecruiterEndpoints:
             "company_name": "Delete Corp",
             "recruiter_name": "Delete Rec",
         }
-        reg_resp = await client.post("/auth/recruiter/register", json=reg_payload)
+        reg_resp = await client.post("/auth/register/recruiter", json=reg_payload)
         access_token = reg_resp.json()["data"]["access_token"]
 
         resp = await client.delete(

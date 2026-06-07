@@ -1,323 +1,436 @@
-# Postman Step-by-Step Test Plan
+# API Endpoints
 
-## Postman Setup
+## Authentication (`/auth`)
 
-### Environment Variables
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/student/register` | Firebase token | Register student → returns JWT pair + sets cookies |
+| POST | `/auth/recruiter/register` | Firebase token | Register recruiter → returns JWT pair + sets cookies |
+| POST | `/auth/login` | Firebase token | Login via Firebase → returns JWT pair + sets cookies |
+| POST | `/auth/refresh` | Refresh token (body or cookie) | Rotate refresh token → new JWT pair + sets cookies |
+| GET | `/auth/me` | Bearer token or cookie | Restore session; auto-refreshes if access token expired |
+| POST | `/auth/logout` | Bearer token or cookie | Blacklist both tokens + clears cookies |
 
-| Variable | Example |
-|----------|---------|
-| `base_url` | `http://localhost:8000` |
-| `firebase_token` | (set dynamically from frontend or Firebase SDK) |
-| `student_access_token` | (from register/login response) |
-| `student_refresh_token` | (from register/login response) |
-| `recruiter_access_token` | (from register/login response) |
-| `recruiter_refresh_token` | (from register/login response) |
+### Request/Response Examples
 
-### How to obtain a Firebase ID token for testing
+**POST /auth/student/register**
+```json
+// Request
+{ "full_name": "John Doe", "email": "john@example.com", "password": "secret123", "college_name": "MIT", "graduation_year": 2026 }
 
-Use the browser app to sign in, then in DevTools Console run:
-
-```javascript
-const token = await firebase.auth().currentUser.getIdToken();
-console.log(token);
+// Response
+{ "success": true, "message": "Student registered successfully", "data": { "access_token": "eyJ...", "refresh_token": "eyJ...", "user": { "id": "...", "email": "john@example.com", "role": "student" } } }
 ```
 
-Copy the token into Postman variable `firebase_token`.
+**POST /auth/recruiter/register**
+```json
+// Request
+{ "company_name": "Acme Corp", "recruiter_name": "Jane Smith", "email": "jane@acme.com", "password": "secret123" }
 
----
+// Response
+{ "success": true, "message": "Recruiter registered successfully", "data": { "access_token": "eyJ...", "refresh_token": "eyJ...", "user": { "id": "...", "email": "jane@acme.com", "role": "recruiter" } } }
+```
 
-## 1. Health Check
+**POST /auth/login**
+```json
+// Request
+{ "email": "john@example.com", "password": "secret123" }
 
-**GET** `{{base_url}}/health`
+// Response
+{ "success": true, "message": "Login successful", "data": { "access_token": "eyJ...", "refresh_token": "eyJ...", "user": { "id": "...", "email": "john@example.com", "role": "student" } } }
+```
 
-Expect: `200` and service metadata.
+**POST /auth/refresh**
+```json
+// Request
+{ "refresh_token": "eyJ..." }
+
+// Response
+{ "success": true, "message": "Token refreshed successfully", "data": { "access_token": "eyJ...", "refresh_token": "eyJ..." } }
+```
+
+**GET /auth/me**
+```json
+// Response
+{ "success": true, "message": "User session restored", "data": { "id": "...", "email": "john@example.com", "role": "student" } }
+```
+
+**POST /auth/logout**
+```json
+// Response
+{ "success": true, "message": "Logged out successfully", "data": {} }
+```
+
+### Cookie behavior
+On register/login/refresh, the backend sets two HTTP-only cookies:
+- `access_token` (path=/) — access token TTL
+- `refresh_token` (path=/) — refresh token TTL
+
+Cookies are sent on all cross-origin requests when `COOKIE_SAMESITE` and `COOKIE_SECURE` are configured appropriately (use `SameSite=None; Secure=True` for production cross-origin; `SameSite=Lax` for same-origin or localhost).
+
+### Session persistence (page refresh)
+1. On page load, the frontend calls `GET /auth/me`
+2. If the `access_token` cookie is valid → user session restored
+3. If the `access_token` cookie expired but `refresh_token` cookie is valid → `/auth/me` auto-refreshes the access token, sets new cookies, and returns user data
+4. If both tokens expired → `TOKEN_EXPIRED` error, user sees login screen
+
+### Auth for all endpoints
+All protected endpoints (`/student/*`, `/recruiter/*`, `/admin/*`) now support authentication via:
+- `Authorization: Bearer <access_token>` header (preferred for programmatic/API clients)
+- `access_token` HTTP-only cookie (used by browser after login)
+If no bearer header is present, the `access_token` cookie is read automatically. This means page refreshes preserve the session across all endpoints, not just `/auth/me`.
+
+## Students (`/student`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/student/profile` | student | Get profile |
+| PUT | `/student/profile` | student | Update profile |
+| POST | `/student/profile/photo` | student | Upload photo (multipart) |
+| GET | `/student/profile/photo` | student | Fetch photo |
+| GET | `/student/applications` | student | List applications |
+| GET | `/student/applications/{id}` | student | Application detail |
+| POST | `/student/saved-companies?company_id=` | student | Save company |
+| GET | `/student/saved-companies` | student | List saved companies |
+| DELETE | `/student/saved-companies/{company_id}` | student | Remove saved company |
+
+### Request/Response Examples
+
+**GET /student/profile**
+```json
+// Response
+{ "success": true, "message": "Student profile retrieved", "data": { "id": "...", "full_name": "John Doe", "email": "john@example.com", "college_name": "MIT", "branch": "CS", "graduation_year": 2026, "skills": "Python, React", "role": "student" } }
+```
+
+**PUT /student/profile**
+```json
+// Request
+{ "full_name": "John Updated", "skills": "Python, React, Go" }
+
+// Response
+{ "success": true, "message": "Profile updated successfully", "data": { "full_name": "John Updated", "skills": "Python, React, Go", "role": "student" } }
+```
+
+**POST /student/profile/photo** — `multipart/form-data` with `photo` field
+```json
+// Response
+{ "success": true, "message": "Profile photo uploaded successfully", "data": { "photo_url": "/student/profile/photo" } }
+```
+
+**GET /student/profile/photo** — Returns raw image binary
+
+**GET /student/applications?page=1&page_size=20**
+```json
+// Response
+{ "success": true, "message": "Applications retrieved successfully", "data": { "applications": [{ "id": "...", "status": "draft", "posting_id": "...", "created_at": "..." }], "total": 1, "page": 1, "page_size": 20 } }
+```
+
+**GET /student/applications/{id}**
+```json
+// Response
+{ "success": true, "message": "Application retrieved successfully", "data": { "id": "...", "status": "submitted", "resume_file_id": "...", "submitted_at": "..." } }
+```
+
+**POST /student/saved-companies?company_id=abc123**
+```json
+// Response
+{ "success": true, "message": "Company saved successfully", "data": { "company_id": "abc123", "student_id": "...", "saved_at": "..." } }
+```
+
+**GET /student/saved-companies**
+```json
+// Response
+{ "success": true, "message": "Saved companies retrieved successfully", "data": { "saved_companies": [{ "company_id": "abc123", "company_name": "Acme Corp" }], "total": 1 } }
+```
+
+**DELETE /student/saved-companies/{company_id}**
+```json
+// Response
+{ "success": true, "message": "Company removed from saved list", "data": {} }
+```
+
+## Recruiters (`/recruiter`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/recruiter/profile` | recruiter | Get profile |
+| PUT | `/recruiter/profile` | recruiter | Update profile |
+| DELETE | `/recruiter/profile` | recruiter | Delete profile |
+| POST | `/recruiter/companies` | recruiter | Create company profile |
+| GET | `/recruiter/companies` | recruiter | Get company profile |
+| PUT | `/recruiter/companies/{id}` | recruiter | Update company profile |
+| POST | `/recruiter/postings` | recruiter | Create posting |
+| GET | `/recruiter/postings` | recruiter | List postings |
+| PUT | `/recruiter/postings/{id}` | recruiter | Update posting |
+| DELETE | `/recruiter/postings/{id}` | recruiter | Delete posting |
+| GET | `/recruiter/applications` | recruiter | List applications |
+| GET | `/recruiter/applications/{id}` | recruiter | Application detail |
+| PATCH | `/recruiter/applications/{id}/status` | recruiter | Update status |
+
+### Request/Response Examples
+
+**GET /recruiter/profile**
+```json
+// Response
+{ "success": true, "message": "Recruiter profile retrieved", "data": { "id": "...", "company_name": "Acme Corp", "recruiter_name": "Jane Smith", "email": "jane@acme.com", "role": "recruiter" } }
+```
+
+**PUT /recruiter/profile**
+```json
+// Request
+{ "recruiter_name": "Jane Updated", "designation": "Senior Recruiter" }
+
+// Response
+{ "success": true, "message": "Profile updated successfully", "data": { "recruiter_name": "Jane Updated", "designation": "Senior Recruiter", "role": "recruiter" } }
+```
+
+**DELETE /recruiter/profile**
+```json
+// Response
+{ "success": true, "message": "Profile deleted successfully", "data": {} }
+```
+
+**POST /recruiter/companies**
+```json
+// Request
+{ "company_name": "Acme Corp", "hiring_status": "hiring", "tech_stack": ["Python", "React"], "location": "San Francisco" }
+
+// Response
+{ "success": true, "message": "Company profile created successfully", "data": { "id": "...", "company_name": "Acme Corp", "hiring_status": "hiring", "tech_stack": ["Python", "React"], "location": "San Francisco", "is_active": true } }
+```
+
+**GET /recruiter/companies**
+```json
+// Response
+{ "success": true, "message": "Company profile retrieved", "data": { "id": "...", "company_name": "Acme Corp", "hiring_status": "hiring" } }
+```
+
+**PUT /recruiter/companies/{id}**
+```json
+// Request
+{ "hiring_status": "paused", "tech_stack": ["Python", "React", "Go"] }
+
+// Response
+{ "success": true, "message": "Company profile updated successfully", "data": { "id": "...", "company_name": "Acme Corp", "hiring_status": "paused", "tech_stack": ["Python", "React", "Go"] } }
+```
+
+**POST /recruiter/postings**
+```json
+// Request
+{ "title": "Software Engineer", "type": "job", "description": "Build awesome things", "location": "Remote", "is_remote": true }
+
+// Response
+{ "success": true, "message": "Job posting created successfully", "data": { "id": "...", "title": "Software Engineer", "type": "job", "status": "open", "is_remote": true } }
+```
+
+**GET /recruiter/postings**
+```json
+// Response
+{ "success": true, "message": "Postings retrieved successfully", "data": { "postings": [{ "id": "...", "title": "Software Engineer", "status": "open" }], "total": 1 } }
+```
+
+**PUT /recruiter/postings/{id}**
+```json
+// Request
+{ "status": "closed", "description": "Updated description" }
+
+// Response
+{ "success": true, "message": "Job posting updated successfully", "data": { "id": "...", "title": "Software Engineer", "status": "closed" } }
+```
+
+**DELETE /recruiter/postings/{id}**
+```json
+// Response
+{ "success": true, "message": "Job posting deleted successfully", "data": {} }
+```
+
+**GET /recruiter/applications?page=1&page_size=20**
+```json
+// Response
+{ "success": true, "message": "Applications retrieved successfully", "data": { "applications": [{ "id": "...", "student_name": "John Doe", "posting_title": "Software Engineer", "status": "submitted" }], "total": 1, "page": 1, "page_size": 20 } }
+```
+
+**GET /recruiter/applications/{id}**
+```json
+// Response
+{ "success": true, "message": "Application retrieved successfully", "data": { "id": "...", "student_name": "John Doe", "college_name": "MIT", "status": "submitted", "resume_file_id": "..." } }
+```
+
+**PATCH /recruiter/applications/{id}/status**
+```json
+// Request
+{ "status": "reviewing", "reason": "Looks promising" }
+
+// Response
+{ "success": true, "message": "Application status updated to reviewing", "data": { "id": "...", "status": "reviewing" } }
+```
+
+## Companies (`/companies`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/companies` | student | List (paginated, filterable) |
+| GET | `/companies/{id}` | student | Detail + open postings |
+
+### Request/Response Examples
+
+**GET /companies?page=1&page_size=20&hiring_status=hiring**
+```json
+// Response
+{ "success": true, "message": "Companies retrieved successfully", "data": { "companies": [{ "id": "...", "company_name": "Acme Corp", "hiring_status": "hiring", "tech_stack": ["Python", "React"], "location": "San Francisco" }], "total": 1, "page": 1, "page_size": 20 } }
+```
+
+**GET /companies/{id}**
+```json
+// Response
+{ "success": true, "message": "Company details retrieved successfully", "data": { "id": "...", "company_name": "Acme Corp", "open_postings": [{ "id": "...", "title": "Software Engineer", "type": "job", "status": "open" }] } }
+```
+
+## Applications (`/applications`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/applications` | student | Create draft |
+| POST | `/applications/{id}/resume` | student | Upload resume (multipart) |
+| POST | `/applications/{id}/certificate` | student | Upload certificate (multipart) |
+| POST | `/applications/{id}/submit` | student | Submit (requires resume) |
+| GET | `/applications/{id}/resume` | student/recruiter | Download resume |
+| GET | `/applications/{id}/certificate` | student/recruiter | Download certificate |
+| DELETE | `/applications/{id}/resume` | student | Delete resume |
+| DELETE | `/applications/{id}/certificate` | student | Delete certificate |
+| POST | `/applications/{id}/verify` | student/recruiter | Start verification |
+| GET | `/applications/{id}/verification` | student/recruiter | Get verification result |
+| GET | `/applications/{id}/verification/stream` | student/recruiter | SSE progress stream |
+| GET | `/verification/history/{app_id}` | student/recruiter | Past verification runs |
+
+### Request/Response Examples
+
+**POST /applications**
+```json
+// Request
+{ "company_id": "cmp123", "posting_id": "post456", "github_project_link": "https://github.com/johndoe/project", "cover_letter": "I'm interested in this role..." }
+
+// Response
+{ "success": true, "message": "Application draft created successfully. Upload resume and submit.", "data": { "id": "...", "status": "draft", "github_project_link": "https://github.com/johndoe/project", "created_at": "..." } }
+```
+
+**POST /applications/{id}/resume** — `multipart/form-data` with `file` field
+```json
+// Response
+{ "success": true, "message": "Resume uploaded successfully", "data": { "file_id": "...", "original_filename": "resume.pdf", "file_type": "resume", "file_size": 12345 } }
+```
+
+**POST /applications/{id}/certificate** — `multipart/form-data` with `file` field
+```json
+// Response
+{ "success": true, "message": "Certificate uploaded successfully", "data": { "file_id": "...", "original_filename": "cert.pdf", "file_type": "certificate", "file_size": 6789 } }
+```
+
+**POST /applications/{id}/submit**
+```json
+// Response
+{ "success": true, "message": "Application submitted successfully", "data": { "id": "...", "status": "submitted", "submitted_at": "..." } }
+```
+
+**GET /applications/{id}/resume** — Returns raw file binary (attachment download)
+**GET /applications/{id}/certificate** — Returns raw file binary (attachment download)
+
+**DELETE /applications/{id}/resume**
+```json
+// Response
+{ "success": true, "message": "Resume deleted successfully", "data": {} }
+```
+
+**DELETE /applications/{id}/certificate**
+```json
+// Response
+{ "success": true, "message": "Certificate deleted successfully", "data": {} }
+```
+
+**POST /applications/{id}/verify**
+```json
+// Response
+{ "success": true, "message": "Verification completed", "data": { "id": "...", "status": "completed", "overall_score": 85, "verdict": "positive", "summary": "Credentials verified successfully" } }
+```
+
+**GET /applications/{id}/verification**
+```json
+// Response
+{ "success": true, "message": "Verification result retrieved", "data": { "id": "...", "status": "completed", "overall_score": 85, "verdict": "positive" } }
+```
+
+**GET /applications/{id}/verification/stream** — Server-Sent Events
+```
+event: progress
+data: {"type": "progress", "stage": "resume", "message": "Analyzing resume..."}
+
+event: progress
+data: {"type": "progress", "stage": "github", "message": "Verifying GitHub..."}
+
+event: result
+data: {"type": "result", "data": { "status": "completed", "overall_score": 85, "verdict": "positive" }}
+```
+
+**GET /verification/history/{app_id}**
+```json
+// Response
+{ "success": true, "message": "Verification history retrieved", "data": { "history": [{ "id": "...", "version": 1, "status": "completed", "overall_score": 85 }], "total": 1 } }
+```
+
+## Admin (`/admin`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/admin/users` | any auth | List all users |
+| GET | `/admin/students` | any auth | List students |
+| GET | `/admin/recruiters` | any auth | List recruiters |
+| PATCH | `/admin/user/status` | any auth | Activate/deactivate user |
+
+### Request/Response Examples
+
+**GET /admin/users?skip=0&limit=100**
+```json
+// Response
+{ "success": true, "message": "All users retrieved", "data": { "students": [{ "id": "...", "full_name": "John Doe", "role": "student" }], "recruiters": [{ "id": "...", "company_name": "Acme Corp", "role": "recruiter" }], "total_students": 1, "total_recruiters": 1 } }
+```
+
+**GET /admin/students?skip=0&limit=100**
+```json
+// Response
+{ "success": true, "message": "All students retrieved", "data": [{ "id": "...", "full_name": "John Doe", "role": "student" }] }
+```
+
+**GET /admin/recruiters?skip=0&limit=100**
+```json
+// Response
+{ "success": true, "message": "All recruiters retrieved", "data": [{ "id": "...", "company_name": "Acme Corp", "role": "recruiter" }] }
+```
+
+**PATCH /admin/user/status?user_id=abc&role=student&is_active=true**
+```json
+// Response
+{ "success": true, "message": "User activated successfully", "data": { "is_active": true } }
+```
+
+## Health
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | — | Health check |
 
 ```json
-{
-  "status": "healthy",
-  "service": "VerifAI Backend",
-  "version": "1.0.0"
-}
+// Response
+{ "status": "healthy", "service": "VerifAI", "version": "1.0.0" }
 ```
 
----
+## Response format
 
-## 2. Student Registration
-
-**POST** `{{base_url}}/auth/student/register`
-
-**Headers:** `Content-Type: application/json`
-
-**Body:**
+**Success:**
 ```json
-{
-  "firebase_token": "{{firebase_token}}",
-  "full_name": "John Doe",
-  "phone": "+1234567890",
-  "college_name": "MIT",
-  "branch": "Computer Science",
-  "graduation_year": 2025,
-  "skills": "Python, JavaScript, AI",
-  "resume_url": "https://resume.url"
-}
+{ "success": true, "message": "...", "data": {} }
 ```
 
-Expect: `200` with `access_token`, `refresh_token`, and `role: student`.
-
-**Postman Tests tab:**
-```javascript
-pm.test("Status 200", () => pm.response.to.have.status(200));
-pm.test("Has access_token", () => pm.expect(pm.response.json().data.access_token).to.not.be.empty);
-pm.test("Has refresh_token", () => pm.expect(pm.response.json().data.refresh_token).to.not.be.empty);
-pm.test("Role is student", () => pm.expect(pm.response.json().data.user.role).to.eql("student"));
-
-var json = pm.response.json();
-pm.environment.set("student_access_token", json.data.access_token);
-pm.environment.set("student_refresh_token", json.data.refresh_token);
-```
-
----
-
-## 3. Recruiter Registration
-
-**POST** `{{base_url}}/auth/recruiter/register`
-
-**Body:**
+**Error:**
 ```json
-{
-  "firebase_token": "{{firebase_token}}",
-  "company_name": "Google",
-  "recruiter_name": "Jane Smith",
-  "phone": "+1234567890",
-  "company_website": "https://google.com",
-  "designation": "Technical Recruiter"
-}
+{ "success": false, "message": "...", "error_code": "CODE", "errors": [] }
 ```
-
-Expect: `200` with `role: recruiter`.
-
-**Postman Tests tab:**
-```javascript
-pm.test("Status 200", () => pm.response.to.have.status(200));
-pm.test("Role is recruiter", () => pm.expect(pm.response.json().data.user.role).to.eql("recruiter"));
-
-var json = pm.response.json();
-pm.environment.set("recruiter_access_token", json.data.access_token);
-pm.environment.set("recruiter_refresh_token", json.data.refresh_token);
-```
-
----
-
-## 4. Login (all roles)
-
-**POST** `{{base_url}}/auth/login`
-
-**Body:**
-```json
-{
-  "firebase_token": "{{firebase_token}}"
-}
-```
-
-Expect: `200` and role-specific user object.
-
-If you get `error_code: "TOKEN_USED_TOO_EARLY"`:
-Wait 2 seconds, fetch a fresh Firebase token, and retry once. If it still fails, verify server NTP sync.
-
----
-
-## 5. Get Current User (Session Restore)
-
-**GET** `{{base_url}}/auth/me`
-
-**Headers:** `Authorization: Bearer {{student_access_token}}`
-
-Expect: `200` with `role`, `email`, `full_name`, `id`.
-
-This is the endpoint the frontend should call on page reload to restore the session. It works for both students and recruiters.
-
-**Postman Tests tab:**
-```javascript
-pm.test("Status 200", () => pm.response.to.have.status(200));
-pm.test("Has role", () => pm.expect(pm.response.json().data.role).to.not.be.empty);
-pm.test("Has email", () => pm.expect(pm.response.json().data.email).to.not.be.empty);
-```
-
----
-
-## 6. Get Student Profile
-
-**GET** `{{base_url}}/student/profile`
-
-**Headers:** `Authorization: Bearer {{student_access_token}}`
-
-Expect: `200` and profile payload.
-
----
-
-## 7. Update Student Profile
-
-**PUT** `{{base_url}}/student/profile`
-
-**Headers:**
-- `Content-Type: application/json`
-- `Authorization: Bearer {{student_access_token}}`
-
-**Body:**
-```json
-{
-  "full_name": "Updated Name",
-  "college_name": "Stanford",
-  "branch": "Data Science"
-}
-```
-
-Expect: `200` and updated data.
-
----
-
-## 8. Upload Profile Photo (multipart)
-
-**POST** `{{base_url}}/student/profile/photo`
-
-**Headers:** `Authorization: Bearer {{student_access_token}}`
-
-**Body:** form-data → key `photo` (type File) → choose a JPG/PNG/WebP under 5MB.
-
-Expect: `200` and `photo_url`.
-
----
-
-## 9. Fetch Profile Photo
-
-**GET** `{{base_url}}/student/profile/photo`
-
-**Headers:** `Authorization: Bearer {{student_access_token}}`
-
-Expect: `200` with image content type.
-
----
-
-## 10. Refresh Token
-
-**POST** `{{base_url}}/auth/refresh`
-
-**Body:**
-```json
-{
-  "refresh_token": "{{student_refresh_token}}"
-}
-```
-
-Expect: `200` with a new access token. Update the environment variable.
-
-**Postman Tests tab:**
-```javascript
-var json = pm.response.json();
-pm.environment.set("student_access_token", json.data.access_token);
-pm.environment.set("student_refresh_token", json.data.refresh_token);
-```
-
----
-
-## 11. Logout
-
-**POST** `{{base_url}}/auth/logout`
-
-**Headers:** `Authorization: Bearer {{student_access_token}}`
-
-**Body:**
-```json
-{
-  "refresh_token": "{{student_refresh_token}}"
-}
-```
-
-Expect: `200` and token invalidation.
-
-**Verification:** Attempt `GET /student/profile` with the old access token and expect `401`.
-
----
-
-## Response Contract
-
-### Success
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": {}
-}
-```
-
-### Error
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "error_code": "ERROR_CODE_STRING",
-  "errors": []
-}
-```
-
----
-
-## Error Codes Reference
-
-| error_code | Status | Source | Description |
-|-----------|--------|--------|-------------|
-| `TOKEN_USED_TOO_EARLY` | 401 | Firebase | Server clock out of sync — retry after fresh token |
-| `FIREBASE_PROJECT_MISMATCH` | 401 | Firebase | Token `aud` differs from project ID |
-| `INVALID_FIREBASE_TOKEN` | 401 | Firebase | Malformed or wrong-project token |
-| `TOKEN_EXPIRED` | 401 | Firebase | Firebase token past `exp` |
-| `TOKEN_REVOKED` | 401 | App | Token revoked by explicit logout or admin action |
-| `TOKEN_REUSED` | 401 | App | Refresh token reused after rotation — frontend should silently re-authenticate |
-| `TOKEN_INVALID` | 401 | App | Generic invalid token (malformed, wrong secret, wrong format) |
-| `USER_NOT_REGISTERED` | 404 | App | Valid token but no user document found |
-| `USER_ALREADY_REGISTERED` | 409 | App | Duplicate registration attempt |
-| `ACCOUNT_DISABLED` | 401 | App | Account disabled by admin |
-| `NO_CREDENTIALS` | 401 | App | No Authorization header |
-| `INVALID_ACCESS_TOKEN` | 401 | App JWT | Access token malformed or wrong secret |
-| `ACCESS_TOKEN_EXPIRED` | 401 | App JWT | Access token past `exp` |
-| `INVALID_REFRESH_TOKEN` | 401 | App JWT | Refresh token malformed or wrong secret |
-| `REFRESH_TOKEN_EXPIRED` | 401 | App JWT | Refresh token past `exp` |
-| `INVALID_TOKEN_TYPE` | 401 | App JWT | Token `type` claim is not `access`/`refresh` |
-| `ROLE_MISMATCH` | 403 | App | Wrong role for endpoint |
-| `USER_NOT_FOUND` | 401 | App | User document missing or inactive |
-
----
-
-## Authorization Test Matrix
-
-| Test | Action | Expected Status |
-|------|--------|-----------------|
-| Valid student token | `GET /student/profile` | 200 |
-| Valid recruiter token | `GET /recruiter/profile` | 200 |
-| Student on recruiter route | `GET /recruiter/profile` with student token | 403 (`ROLE_MISMATCH`) |
-| Recruiter on student route | `GET /student/profile` with recruiter token | 403 (`ROLE_MISMATCH`) |
-| Invalid access token | `GET /student/profile` with `Bearer invalid` | 401 (`INVALID_ACCESS_TOKEN`) |
-| Expired access token | `GET /student/profile` with expired token | 401 (`ACCESS_TOKEN_EXPIRED`) |
-| No token | `GET /student/profile` | 401 (`NO_CREDENTIALS`) |
-| Expired refresh token | `POST /auth/refresh` with expired refresh token | 401 (`REFRESH_TOKEN_EXPIRED`) |
-| Revoked refresh token | `POST /auth/refresh` after logout | 401 (`TOKEN_REVOKED`) |
-| Reused refresh token | `POST /auth/refresh` with already-rotated token | 401 (`TOKEN_REUSED`) |
-| /auth/me valid token | `GET /auth/me` with valid access token | 200 |
-| /auth/me expired token | `GET /auth/me` with expired access token | 401 (`ACCESS_TOKEN_EXPIRED`) |
-| /auth/me no token | `GET /auth/me` without header | 401 (`NO_CREDENTIALS`) |
-
----
-
-## HTTP Status Codes
-
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 409 | Conflict |
-| 422 | Validation Error |
-| 429 | Rate Limit Exceeded |
-| 500 | Internal Server Error |

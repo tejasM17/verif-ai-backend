@@ -16,7 +16,12 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         except AppException as exc:
-            logger.warning("AppException: %s (error_code=%s)", exc.message, exc.error_code)
+            rid = getattr(request.state, "request_id", "")
+            logger.warning(
+                "[%s] %s %s - %s (error_code=%s)",
+                rid, request.method, request.url.path,
+                exc.message, exc.error_code,
+            )
             content = {
                 "success": False,
                 "message": exc.message,
@@ -29,7 +34,12 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 content=content,
             )
         except Exception as exc:
-            logger.error("Unhandled exception: %s", str(exc), exc_info=True)
+            rid = getattr(request.state, "request_id", "")
+            logger.error(
+                "[%s] %s %s - Unhandled: %s",
+                rid, request.method, request.url.path,
+                str(exc), exc_info=True,
+            )
             return JSONResponse(
                 status_code=500,
                 content={
