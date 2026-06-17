@@ -61,7 +61,9 @@ class TestAuthAPI:
         data = resp.json()
         assert data["uid"] == "test_uid_123"
         assert data["email"] == "test@example.com"
-        mock_firebase_auth.verify_id_token.assert_called_once_with("valid_token")
+        mock_firebase_auth.verify_id_token.assert_called_once_with(
+            "valid_token", clock_skew_seconds=10
+        )
 
     def test_me_invalid_token(self, client, mock_firebase_auth):
         mock_firebase_auth.verify_id_token.side_effect = Exception("Invalid token")
