@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPAuthorizationCredentials
-from app.schemas.auth import AuthRequest, GoogleAuthRequest, GithubAuthRequest, UserResponse
+from app.schemas.auth import (
+    AuthRequest,
+    GoogleAuthRequest,
+    GithubAuthRequest,
+    UserResponse,
+)
 from app.services.auth_service import AuthService
-from app.core.security import security
+from app.api.dependencies import get_current_user
 
 router = APIRouter()
 service = AuthService()
@@ -34,5 +38,5 @@ def github_login(req: GithubAuthRequest):
 
 
 @router.get("/me", response_model=UserResponse)
-def get_me(creds: HTTPAuthorizationCredentials = Depends(security)):
-    return service.get_current_user(creds.credentials)
+def get_me(current_user: dict = Depends(get_current_user)):
+    return current_user

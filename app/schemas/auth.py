@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class AuthRequest(BaseModel):
@@ -16,9 +16,10 @@ class GithubAuthRequest(BaseModel):
 
 class UserResponse(BaseModel):
     uid: str
-    email: str
+    email: EmailStr
     displayName: str | None = None
     photoUrl: str | None = None
+    role: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -27,3 +28,4 @@ class TokenResponse(BaseModel):
     localId: str
     displayName: str | None = None
     photoUrl: str | None = None
+    role: str | None = None

@@ -1,7 +1,9 @@
 from fastapi import HTTPException
 from app.repositories.firebase_repository import FirebaseRepository
+from app.services.user_service import UserService
 
 repo = FirebaseRepository()
+user_service = UserService()
 
 
 class AuthService:
@@ -19,54 +21,68 @@ class AuthService:
                 status_code=401,
                 detail=data.get("error", {}).get("message", "Login failed"),
             )
+        uid = data.get("localId", "")
+        profile = user_service.get_or_create_profile(
+            uid=uid,
+            email=data.get("email", ""),
+        )
         return {
             "idToken": data["idToken"],
             "email": data["email"],
-            "localId": data["localId"],
+            "localId": uid,
+            "role": profile.get("role"),
+        }
+
+    def _social_login(self, id_token: str):
+        decoded = repo.verify_token(id_token)
+        uid = decoded["uid"]
+        email = decoded.get("email", "")
+        display_name = decoded.get("name", "")
+        photo_url = decoded.get("picture", "")
+        profile = user_service.get_or_create_profile(
+            uid=uid,
+            email=email,
+            display_name=display_name,
+            photo_url=photo_url,
+        )
+        return {
+            "idToken": id_token,
+            "email": email,
+            "localId": uid,
+            "displayName": display_name,
+            "photoUrl": photo_url,
+            "role": profile.get("role"),
         }
 
     def google_login(self, id_token: str):
         try:
-            decoded = repo.verify_token(id_token)
-            uid = decoded["uid"]
-            email = decoded.get("email", "")
-            display_name = decoded.get("name", "")
-            photo_url = decoded.get("picture", "")
-            return {
-                "idToken": id_token,
-                "email": email,
-                "localId": uid,
-                "displayName": display_name,
-                "photoUrl": photo_url,
-            }
+            return self._social_login(id_token)
         except Exception as e:
             raise HTTPException(status_code=401, detail=str(e))
 
     def github_login(self, id_token: str):
         try:
-            decoded = repo.verify_token(id_token)
-            uid = decoded["uid"]
-            email = decoded.get("email", "")
-            display_name = decoded.get("name", "")
-            photo_url = decoded.get("picture", "")
-            return {
-                "idToken": id_token,
-                "email": email,
-                "localId": uid,
-                "displayName": display_name,
-                "photoUrl": photo_url,
-            }
+            return self._social_login(id_token)
         except Exception as e:
             raise HTTPException(status_code=401, detail=str(e))
 
     def get_current_user(self, token: str):
         try:
             decoded = repo.verify_token(token)
+            profile = user_service.get_or_create_profile(
+                uid=decoded["uid"],
+                email=decoded.get("email", ""),
+                display_name=decoded.get("name"),
+                photo_url=decoded.get("picture"),
+            )
             return {
                 "uid": decoded["uid"],
                 "email": decoded.get("email", ""),
-                "displayName": decoded.get("name", ""),
-                "photoUrl": decoded.get("picture", ""),
+                "displayName": decoded.get("name"),
+                "photoUrl": decoded.get("picture"),
+                "role": profile.get("role"),
             }
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=401, detail=str(e))

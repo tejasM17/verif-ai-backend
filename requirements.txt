@@ -3,5 +3,6 @@ uvicorn
 firebase-admin
 httpx
 python-dotenv
+pymongo
 pytest
 pytest-asyncio

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import patch
 from fastapi import HTTPException
 
 from app.services.auth_service import AuthService
@@ -26,9 +26,25 @@ class TestAuthService:
         result = service.get_current_user("valid_token")
         assert result["uid"] == "test_uid_123"
         assert result["email"] == "test@example.com"
+        assert "role" in result
 
     def test_get_current_user_raises_on_invalid(self, service, mock_firebase_auth):
         mock_firebase_auth.verify_id_token.side_effect = Exception("bad")
         with pytest.raises(HTTPException) as exc:
             service.get_current_user("bad_token")
         assert exc.value.status_code == 401
+
+    def test_get_current_user_returns_role(self, service, mock_firebase_auth):
+        from app.repositories.user_repository import UserRepository
+
+        with patch.object(
+            UserRepository,
+            "get_profile",
+            return_value={
+                "uid": "test_uid_123",
+                "email": "test@example.com",
+                "role": "recruiter",
+            },
+        ):
+            result = service.get_current_user("valid_token")
+            assert result["role"] == "recruiter"
