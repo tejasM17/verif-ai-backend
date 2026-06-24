@@ -19,7 +19,7 @@ def home():
 
 @router.post("/signup")
 async def signup(req: AuthRequest):
-    return service.signup(req.email, req.password)
+    return service.signup(req.email, req.password, req.role)
 
 
 @router.post("/login")

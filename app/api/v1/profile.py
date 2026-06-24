@@ -5,7 +5,12 @@ from fastapi.responses import Response
 from app.api.dependencies import get_current_user, require_student, require_recruiter
 from app.core.database import get_photos_collection
 from app.domain.enums.role import UserRole
-from app.schemas.user import OnboardingRequest, StudentProfile, RecruiterProfile
+from app.schemas.user import (
+    OnboardingRequest,
+    RecruiterProfile,
+    RoleUpdate,
+    StudentProfile,
+)
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -15,6 +20,26 @@ service = UserService()
 @router.get("/me")
 def get_my_profile(current_user: dict = Depends(get_current_user)):
     return service.get_profile(current_user["uid"])
+
+
+@router.put("/me")
+def update_my_profile(
+    data: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    uid = current_user["uid"]
+    role = current_user.get("role")
+    if role == UserRole.student.value:
+        return service.update_student_profile(uid, data)
+    elif role == UserRole.recruiter.value:
+        return service.update_recruiter_profile(uid, data)
+    return service.update_profile(uid, data)
+
+
+@router.delete("/me")
+def delete_my_profile(current_user: dict = Depends(get_current_user)):
+    service.delete_profile(current_user["uid"])
+    return {"detail": "Profile deleted"}
 
 
 @router.post("/onboarding")
@@ -32,6 +57,11 @@ def onboarding(req: OnboardingRequest, current_user: dict = Depends(get_current_
     return service.get_profile(uid)
 
 
+@router.put("/role")
+def update_role(req: RoleUpdate, current_user: dict = Depends(get_current_user)):
+    return service.set_role(current_user["uid"], req.role)
+
+
 @router.get("/student", response_model=StudentProfile)
 def get_student_profile(current_user: dict = Depends(require_student)):
     return service.get_profile(current_user["uid"])
@@ -43,13 +73,21 @@ def get_recruiter_profile(current_user: dict = Depends(require_recruiter)):
 
 
 @router.put("/photo")
-def upload_photo(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+def upload_photo(
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+):
     content = file.file.read()
     mime = file.content_type or "image/png"
     photos = get_photos_collection()
     photos.update_one(
         {"uid": current_user["uid"]},
-        {"$set": {"uid": current_user["uid"], "data": base64.b64encode(content).decode(), "mime": mime}},
+        {
+            "$set": {
+                "uid": current_user["uid"],
+                "data": base64.b64encode(content).decode(),
+                "mime": mime,
+            }
+        },
         upsert=True,
     )
     photo_url = f"/profile/photo/{current_user['uid']}"
@@ -67,3 +105,8 @@ def get_photo(uid: str):
         content=base64.b64decode(doc["data"]),
         media_type=doc["mime"],
     )
+
+
+@router.get("/{uid}")
+def get_profile_by_uid(uid: str):
+    return service.get_profile(uid)

@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from app.domain.enums.role import UserRole
 from app.repositories.firebase_repository import FirebaseRepository
 from app.services.user_service import UserService
 
@@ -7,9 +8,14 @@ user_service = UserService()
 
 
 class AuthService:
-    def signup(self, email: str, password: str):
+    def signup(self, email: str, password: str, role: str | None = None):
         try:
             user = repo.create_user(email, password)
+            if role:
+                user_service.get_or_create_profile(
+                    uid=user.uid, email=email, display_name=None, photo_url=None
+                )
+                user_service.set_role(user.uid, UserRole(role))
             return {"uid": user.uid, "email": user.email}
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -45,6 +51,8 @@ class AuthService:
             display_name=display_name,
             photo_url=photo_url,
         )
+        if not profile.get("role"):
+            profile = user_service.set_role(uid, UserRole.student)
         return {
             "idToken": id_token,
             "email": email,

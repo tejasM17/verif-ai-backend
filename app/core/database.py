@@ -15,3 +15,7 @@ def get_db():
 
 def get_photos_collection():
     return get_db()["profile_photos"]
+
+
+def get_resumes_collection():
+    return get_db()["resumes"]

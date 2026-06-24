@@ -8,15 +8,9 @@ class StudentProfile(BaseModel):
     email: EmailStr
     display_name: Optional[str] = None
     photo_url: Optional[str] = None
-    role: UserRole = UserRole.student
-
-    skills: list[str] = [] 
     resume_url: Optional[str] = None
-    certificate_urls: list[str] = []
-    github_url: Optional[str] = None
-    trust_score: float = 0.0
-    is_verified: bool = False
-    is_public: bool = False
+    role: UserRole = UserRole.student
+    skills: list[str] = []
 
 
 class RecruiterProfile(BaseModel):
@@ -26,7 +20,7 @@ class RecruiterProfile(BaseModel):
     photo_url: Optional[str] = None
     role: UserRole = UserRole.recruiter
 
-    company_name: Optional[str] = None 
+    company_name: Optional[str] = None
     company_email: Optional[str] = None
 
 

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from app.domain.enums.role import UserRole
 
@@ -10,6 +10,9 @@ class UserEntity:
     display_name: Optional[str] = None
     photo_url: Optional[str] = None
     role: Optional[UserRole] = None
+    skills: list[str] = field(default_factory=list)
+    company_name: Optional[str] = None
+    company_email: Optional[str] = None
 
     def to_dict(self) -> dict:
         d = {
@@ -20,4 +23,10 @@ class UserEntity:
         }
         if self.role:
             d["role"] = self.role.value
+        if self.skills:
+            d["skills"] = self.skills
+        if self.company_name is not None:
+            d["company_name"] = self.company_name
+        if self.company_email is not None:
+            d["company_email"] = self.company_email
         return d

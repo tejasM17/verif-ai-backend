@@ -42,12 +42,13 @@ app/
     v1/
       auth.py                # Auth routes (/signup, /login, /google, /github, /me)
       profile.py             # Profile routes (/profile/me, /profile/onboarding, /profile/student, /profile/recruiter)
+      resume.py              # Resume routes (/resume/upload, /resume/me, /resume/{uid}, /resume/file/{uid})
   services/
     auth_service.py          # Auth business logic (login, signup, token verify)
-    user_service.py          # Profile business logic (get/create, set role, update)
+    user_service.py          # Profile + resume business logic (get/create, set role, update, upload/delete resume)
   repositories/
     firebase_repository.py   # Firebase Admin + REST data access
-    user_repository.py       # Firebase RTDB CRUD for user profiles
+    user_repository.py       # Firebase RTDB CRUD + MongoDB resume storage
 ```
 
 ## Auth Flow
