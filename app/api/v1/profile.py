@@ -5,12 +5,9 @@ from fastapi.responses import Response
 from app.api.dependencies import get_current_user, require_student, require_recruiter
 from app.core.database import get_photos_collection
 from app.domain.enums.role import UserRole
-from app.schemas.user import (
-    OnboardingRequest,
-    RecruiterProfile,
-    RoleUpdate,
-    StudentProfile,
-)
+from app.schemas.user import OnboardingRequest, RoleUpdate
+from app.schemas.student import StudentProfile
+from app.schemas.recruiter import RecruiterProfile
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/profile", tags=["profile"])

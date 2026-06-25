@@ -1,27 +1,10 @@
-from pydantic import BaseModel, EmailStr
 from typing import Optional
+
+from pydantic import BaseModel
+
 from app.domain.enums.role import UserRole
-
-
-class StudentProfile(BaseModel):
-    uid: str
-    email: EmailStr
-    display_name: Optional[str] = None
-    photo_url: Optional[str] = None
-    resume_url: Optional[str] = None
-    role: UserRole = UserRole.student
-    skills: list[str] = []
-
-
-class RecruiterProfile(BaseModel):
-    uid: str
-    email: EmailStr
-    display_name: Optional[str] = None
-    photo_url: Optional[str] = None
-    role: UserRole = UserRole.recruiter
-
-    company_name: Optional[str] = None
-    company_email: Optional[str] = None
+from app.schemas.recruiter import RecruiterProfile
+from app.schemas.student import StudentProfile
 
 
 class RoleUpdate(BaseModel):
