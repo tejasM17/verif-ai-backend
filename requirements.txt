@@ -10,3 +10,4 @@ pytest
 pytest-asyncio
 mongomock
 email-validator
+python-multipart
