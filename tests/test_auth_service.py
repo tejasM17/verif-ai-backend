@@ -12,14 +12,26 @@ def service(mock_firebase_auth):
 
 class TestAuthService:
     def test_signup_returns_user(self, service, mock_firebase_auth):
-        result = service.signup("a@b.com", "pass")
+        result = service.signup("a@b.com", "pass", role="recruiter")
         assert result["uid"] == "test_uid_123"
         assert result["email"] == "test@example.com"
+
+    def test_signup_requires_role(self, service, mock_firebase_auth):
+        with pytest.raises(HTTPException) as exc:
+            service.signup("a@b.com", "pass")
+        assert exc.value.status_code == 400
+        assert "role" in str(exc.value.detail).lower()
+
+    def test_signup_rejects_invalid_role(self, service, mock_firebase_auth):
+        with pytest.raises(HTTPException) as exc:
+            service.signup("a@b.com", "pass", role="admin")
+        assert exc.value.status_code == 400
+        assert "invalid role" in str(exc.value.detail).lower()
 
     def test_signup_raises_on_error(self, service, mock_firebase_auth):
         mock_firebase_auth.create_user.side_effect = Exception("fail")
         with pytest.raises(HTTPException) as exc:
-            service.signup("a@b.com", "pass")
+            service.signup("a@b.com", "pass", role="student")
         assert exc.value.status_code == 400
 
     def test_get_current_user_success(self, service, mock_firebase_auth):

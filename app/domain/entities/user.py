@@ -13,6 +13,8 @@ class UserEntity:
     skills: list[str] = field(default_factory=list)
     company_name: Optional[str] = None
     company_email: Optional[str] = None
+    role_title: Optional[str] = None
+    location: Optional[str] = None
 
     def to_dict(self) -> dict:
         d = {
@@ -29,4 +31,8 @@ class UserEntity:
             d["company_name"] = self.company_name
         if self.company_email is not None:
             d["company_email"] = self.company_email
+        if self.role_title is not None:
+            d["role_title"] = self.role_title
+        if self.location is not None:
+            d["location"] = self.location
         return d

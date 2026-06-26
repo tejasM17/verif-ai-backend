@@ -11,11 +11,22 @@ class AuthService:
     def signup(self, email: str, password: str, role: str | None = None):
         try:
             user = repo.create_user(email, password)
-            if role:
-                user_service.get_or_create_profile(
-                    uid=user.uid, email=email, display_name=None, photo_url=None
+            # Require a valid role at signup so accounts never end up role-less.
+            # The frontend must always send 'student' or 'recruiter'.
+            if not role:
+                raise ValueError(
+                    "role is required at signup (must be 'student' or 'recruiter')"
                 )
-                user_service.set_role(user.uid, UserRole(role))
+            try:
+                role_enum = UserRole(role)
+            except ValueError as e:
+                raise ValueError(
+                    f"invalid role '{role}': must be 'student' or 'recruiter'"
+                ) from e
+            user_service.get_or_create_profile(
+                uid=user.uid, email=email, display_name=None, photo_url=None
+            )
+            user_service.set_role(user.uid, role_enum)
             return {"uid": user.uid, "email": user.email}
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))

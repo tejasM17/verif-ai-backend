@@ -13,3 +13,5 @@ class RecruiterProfile(BaseModel):
 
     company_name: Optional[str] = None
     company_email: Optional[str] = None
+    role_title: Optional[str] = None
+    location: Optional[str] = None

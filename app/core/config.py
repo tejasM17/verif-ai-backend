@@ -16,6 +16,14 @@ class Settings:
     MONGODB_URI: str = os.getenv("MONGODB_URI", "")
     APP_TITLE: str = "VerifAI"
     APP_VERSION: str = "1.0.0"
+    CORS_ORIGINS: str = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()

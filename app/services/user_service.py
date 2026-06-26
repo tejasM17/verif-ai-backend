@@ -85,7 +85,14 @@ class UserService:
         return self.update_profile(uid, filtered)
 
     def update_recruiter_profile(self, uid: str, data: dict) -> dict:
-        allowed = {"display_name", "photo_url", "company_name", "company_email"}
+        allowed = {
+            "display_name",
+            "photo_url",
+            "company_name",
+            "company_email",
+            "role_title",
+            "location",
+        }
         filtered = {k: v for k, v in data.items() if k in allowed}
         if not filtered:
             raise HTTPException(

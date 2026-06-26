@@ -14,6 +14,7 @@ class TestAuthAPI:
             json={
                 "email": "new@example.com",
                 "password": "secret123",
+                "role": "recruiter",
             },
         )
         assert resp.status_code == 200
@@ -23,6 +24,32 @@ class TestAuthAPI:
         mock_firebase_auth.create_user.assert_called_once_with(
             email="new@example.com", password="secret123"
         )
+
+    def test_signup_requires_role(self, client, mock_firebase_auth):
+        # Without `role` the signup must be rejected so accounts never end up
+        # in a role-less state (which would silently 403 every recruiter-gated
+        # endpoint downstream).
+        resp = client.post(
+            "/signup",
+            json={
+                "email": "norole@example.com",
+                "password": "secret123",
+            },
+        )
+        assert resp.status_code == 400
+        assert "role" in resp.json()["detail"].lower()
+
+    def test_signup_rejects_invalid_role(self, client, mock_firebase_auth):
+        resp = client.post(
+            "/signup",
+            json={
+                "email": "badrole@example.com",
+                "password": "secret123",
+                "role": "admin",
+            },
+        )
+        assert resp.status_code == 400
+        assert "invalid role" in resp.json()["detail"].lower()
 
     def test_signup_failure(self, client, mock_firebase_auth):
         mock_firebase_auth.create_user.side_effect = Exception("Email already exists")

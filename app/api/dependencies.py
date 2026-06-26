@@ -30,12 +30,30 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security)) ->
 
 def require_role(required_role: str):
     def checker(current_user: dict = Depends(get_current_user)) -> dict:
-        if current_user.get("role") != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"{required_role} role required",
+        actual = current_user.get("role")
+        if actual == required_role:
+            return current_user
+        # Surface a helpful message that explains *why* the gate fired and what
+        # the user can do about it, instead of a generic 403.
+        actual_label = actual if actual else "none"
+        if required_role == "recruiter" and actual in (None, "student"):
+            detail = (
+                f"This account is registered as '{actual_label}'. "
+                "To manage roles for a company, sign out and create a recruiter account, "
+                "or update your role at POST /profile/role."
             )
-        return current_user
+        elif required_role == "student" and actual in (None, "recruiter"):
+            detail = (
+                f"This account is registered as '{actual_label}'. "
+                "To apply for jobs, sign out and create a student account, "
+                "or update your role at POST /profile/role."
+            )
+        else:
+            detail = f"{required_role} role required (account is '{actual_label}')."
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=detail,
+        )
 
     return checker
 

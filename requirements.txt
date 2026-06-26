@@ -4,5 +4,9 @@ firebase-admin
 httpx
 python-dotenv
 pymongo
+bson
+faker
+tqdm
 pytest
 pytest-asyncio
+mongomock

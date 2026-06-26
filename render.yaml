@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: verifai-backend
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FIREBASE_WEB_API_KEY
+        sync: false
+      - key: FIREBASE_CRED_PATH
+        value: firebase-key.json
+      - key: FIREBASE_DATABASE_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
